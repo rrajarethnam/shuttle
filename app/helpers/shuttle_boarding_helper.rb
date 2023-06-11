@@ -1,0 +1,2 @@
+module ShuttleBoardingHelper
+end

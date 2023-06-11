@@ -1,0 +1,87 @@
+
+<h1>Shuttle Boarding App</h1>
+
+<div id="map" style="height: 400px;"></div>
+
+<style>
+  /* Custom CSS to make icon background transparent */
+  .shuttle-icon {
+    background-color: transparent !important;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var map = L.map('map').setView([<%= @shuttle.lat %>, <%= @shuttle.lng%>], 15);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    var shuttleMarker;
+    var userMarkers = [];
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(updateMyLocation);
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function updateMyLocation(position) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "/update_location", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.send(JSON.stringify({ lat: position.coords.latitude, lng: position.coords.longitude }));
+    }
+
+    function updateShuttleMarker(lat, lng) {
+      if (shuttleMarker) {
+        map.removeLayer(shuttleMarker);
+      }
+      var icon = L.divIcon({
+        className: 'shuttle-icon',
+        html: '<i class="fa-solid fa-van-shuttle"></i>',  // Font Awesome "van-shuttle" icon
+        iconSize: [20, 20],
+        iconAnchor: [20, 20]
+      });
+      shuttleMarker = L.marker([lat, lng], { icon: icon }).addTo(map);
+      map.panTo(new L.LatLng(lat, lng));
+      
+    }
+
+    function updateUserMarkers(users) {
+      userMarkers.forEach(function(marker) {
+        map.removeLayer(marker);
+      });
+      userMarkers = [];
+      users.forEach(function(user) {
+        var marker = L.marker([user.lat, user.lng]).addTo(map);
+        userMarkers.push(marker);
+      });
+    }
+
+    function updateLocations() {
+      fetch('/locations')
+        .then(response => response.json())
+        .then(data => {
+          updateShuttleMarker(data.shuttle.lat, data.shuttle.lng);
+          updateUserMarkers(data.users);
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+    }
+
+
+    getLocation();
+    setInterval(getLocation, 5000);
+
+    updateLocations();
+    setInterval(updateLocations, 5000);
+  });
+</script>
+
+

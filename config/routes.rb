@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+  root 'shuttle#index'
+  post '/update_location', to: 'shuttle#update_location'
+  get '/locations', to: 'shuttle#locations'
 
-  # Defines the root path route ("/")
-  # root "articles#index"
+  # other routes...
 end
